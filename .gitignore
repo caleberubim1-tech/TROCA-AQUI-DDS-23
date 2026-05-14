@@ -1,0 +1,5 @@
+# Ignore a pasta de modulos para não pesar o repositório
+server/node_modules
+
+# Ignore as variaveis de ambiente
+server/.env

@@ -1,0 +1,32 @@
+<%- include('../partials/header') %>
+
+<main style="height: 300px;">
+    <div class="container">
+        <div class="card">
+
+            <form action="/usuarios/login" method="post">
+
+                <!-- Caixinha de email -->
+                <div>
+                    <label for="email_login">Email</label>
+                    <input type="email" id="email_login" name="email">
+                </div>
+
+                <!-- Caixinha de senha -->
+                <div>
+                    <label for="senha_login">Senha</label>
+                    <input type="password" id="senha_login" name="senha">
+                </div>
+
+                <button type="submit">Entrar</button>
+
+                <a href="/cadastro">Cadastro</a>
+
+            </form>
+
+        </div>
+    </div>
+</main>
+
+<!-- importa o footer -->
+<%- include('../partials/footer') %>
