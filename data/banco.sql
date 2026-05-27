@@ -53,6 +53,7 @@ CREATE TABLE usuarios(
     INSERT INTO usuarios(nome, email, senha, telefone, perfil)
     VALUES('Admin Calebe', 'crubim@gmail.com', '$2a$10$bnVggkOhZQJP9ipjXWe01eztcGAB/T3ptXbA36MzwiAyAn6EkYaca' , '40028922' , 'administrador');
     
+    
     -- OFERTANTE
      INSERT INTO usuarios(nome, email, senha, telefone, perfil)
     VALUES('George Ofertante', 'ofertante@gmail.com', '$2a$10$bnVggkOhZQJP9ipjXWe01eztcGAB/T3ptXbA36MzwiAyAn6EkYaca' , '40028922' , 'ofertante');
