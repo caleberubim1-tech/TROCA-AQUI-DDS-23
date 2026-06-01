@@ -1,108 +1,116 @@
-//Importacao do model 
-const usuarioModel = require('../models/usuarioModel.js');
-//importar pacotes
-//para criptografar a senha do usuário
-const bcrypt = require('bcrypt'); //importando o bcrypt para criptografar a senha do usuário
-//para lidar con cookies
-const jwt = require('jsonwebtoken'); //importando o jsonwebtoken para lidar com tokens de autenticação
+// importação do model
+const usuarioModel = require("../models/usuarioModel.js")
+
+// importar pacotes
+// para criptrograffia
+const bcrypt = require('bcrypt')
+// para lidar com cookies
+const jwt = require('jsonwebtoken')
 
 module.exports = {
-  //FUNÇÕES DE LOGIN
-  login: async (req, res) => {
-    try {
-      //Pega as informações das caixinhas da view, de acordo com o name delas
-      const { email, senha } = req.body; //pegando o email e a senha do corpo da requisição
+    //FUNÇÕES DE LOGIN
+    login: async (req,res) =>{
+        try{
+            // Pega as infomações das caixinhas da view, de acordo com o name delas
+            const { email, senha } = req.body
+            
+            // Executa a função de busca no model
+            const usuario = await usuarioModel.buscarPorEmail(email)
+            // Se não existir, mensagem de erro
+            if (!usuario) return res.status(404).render('erro', { mensagem: "Credenciais inválidas"})
 
-      //Executa a funçao de busca no model
-      const usuario = await usuarioModel.buscarPorEmail(email); //buscando o usuário pelo email
-      //Se nao encontrar o usuário, retorna uma mensagem de erro
-      if (!usuario) {
-        return res.status(404).render('error', { messagem: 'Credenciais inválidas' });
-      }
-      //compara a senha fornecida com a senha armazenada no banco de dados
-      const senhaValida = await bcrypt.compare(senha, usuario.senha); //comparando a senha fornecida com a senha armazenada no banco de dados
-      if (!senhaValida) {
-        return res.status(404).render('error', { messagem: 'Credenciais inválidas' });
-      }
-      //Gera o token de acesso , contendo o perfil
-      const token = jwt.sign(
-        { id: usuario.id, perfil: usuario.perfil, nome: usuario.nome }, //payload do token, contendo o id e o perfil do usuário
-        process.env.JWT_SECRET, //chave secreta para assinar o token
-        { expiresIn: '2h' } //tempo de expiração do token
-      );
+            // compara a senha que o usuário digitou, com a senha do usuario retornado no banco
+            const senhaValida = await bcrypt.compare(senha, usuario.senha)
+            // Se senhas não coincidirem, mensagem de erro
+            if (!senhaValida) return res.status(404).render('erro', { mensagem: "Credenciais inválidas"})
 
-      //Guarda o token em um cookie, para ser usado nas próximas requisições
-      res.cookie('token', token, { httpOnly: true }); //guardando o token em um cookie, para ser usado nas próximas requisições
+            // Gera o token de acesso, contendo o perfil 
+            const token = jwt.sign(
+                {id: usuario.id, perfil: usuario.perfil, nome: usuario.nome},
+                process.env.JWT_SECRET,
+                {expiresIn: '2h'}       
+            )
 
-      //Redireciona o usuário para a página inicial, ou para a página de acordo com o perfil
-      if (usuario.perfil === 'administrador') return res.redirect('/usuarios'); //redirecionando o usuário para a página de administrador
-      if (usuario.perfil === 'ofertante') return res.redirect('/produtos/meus-produtos'); //redirecionando o usuário para a página inicial
-      if (usuario.perfil === 'interessado') return res.redirect('/produtos/vitrine'); //redirecionando o usuário para a página de moderador
-    }
-    catch (error) {
-      res.status(500).render('error', { messagem: 'Erro interno do servidor' });
+            // Guardar o token nos cookies do navegador
+            res.cookie('token', token, { httpOnly: true })
 
-    }
-  },
-  logout: (req, res) => {
-    //Limpa o token dos cookies, efetivando o logout do usuário
-    res.clearCookie('token'); //limpando o token dos cookies, efetivando o logout do usuário
-    //Volta para a página de login
-    res.redirect('/login'); //redirecionando o usuário para a página de login
-  },
-  // CRUD
-  // Criar Usuários
-
-  renderizarCadastro: (req, res) => {
-    res.render("usuarios/cadastro");
-  },
-
-  cadastrar: async (req, res) => { // async porque tem operações assíncronas dentro da função (bcrypt e model)
-
-    try {
-      // Pega as infomações das caixinhas da view, de acordo com o name delas
-      const { nome, email, senha, telefone, perfil } = req.body;
-
-      if (perfil === "administrador")
-        return res
-          .status(403)
-          .render("erro", {
-            mensagem:
-              "Não é permitido criar usuários com perfil de administrador",
-          });
-
-      // Multer salva a foto da pessoa na pasta uploads/usuarios, e o nome do arquivo fica disponível em req.file.filename
-      const fotoDaPessoa = req.file ? `uploads/usuarios/${req.file.filename}` : null;
-
-
-      // Criptografa a senha antes de salvar no banco
-      const senhaHash = await bcrypt.hash(senha, 10);
-
-      // Chama o model passando as informações para criar o usuário
-      await usuarioModel.criarUsuario(nome, email, senhaHash, telefone, fotoDaPessoa, perfil);
-
-      // Variável para definir para onde o usuário será redirecionado após criar o novo usuário
-      let redirecionadoPara = "/login";
-      // Verifica se o usuário que está criando o novo usuário é um administrador, para redirecionar ele para a tela de usuários, caso contrário, redireciona para a tela de login
-      if (req.cookies && req.cookies.token) {
-        try {
-          // lê o token dos cookies e verifica ele, usando a mesma chave secreta que foi usada para criar o token
-          const decodificado = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-          if (decodificado.perfil === "administrador") {
-            redirecionadoPara = "/usuarios";
-          }
+            // Redirecionamento de acordo com o perfil
+            if(usuario.perfil === "administrador") return res.redirect("/usuarios")
+            if(usuario.perfil === "ofertante") return res.redirect("/produtos/meus-produtos")
+            if(usuario.perfil === "interessado") return res.redirect("/produtos/vitrine")
         }
-        catch (erro) { // Se o token for inválido ou tiver expirado, ele cai aqui
-          console.error("Erro ao verificar token:", erro);
+        catch(erro){
+            res.status(500).render('erro', { mensagem: "Erro interno no servidor"})
         }
-      }
+    },
 
-      // Redireciona para a tela de login
-      res.redirect(redirecionadoPara);
+    logout: (req,res) =>{
+        //Limpa o token dos cookies
+        res.clearCookie('token')
+        // Volta pra tela de login
+        res.redirect("/login")
+    },
 
-    } catch (erro) {
-      console.error("Erro ao cadastrar usuário:", erro);
-      res.status(500).render("erro", { mensagem: "Erro interno no servidor" });
+    // CRUD
+    // CRIAR USUÁRIOS
+    renderizarCadastro: (req,res) => {
+        res.render('usuarios/cadastrar')
+    },
+
+    cadastrar: async (req,res) => {
+        try{
+        // Objeto com as informações preenchidas nos inputs
+        const { nome, email, senha, telefone, perfil } = req.body
+
+        // Não deixa o usuário cadastrar um adm
+        if(perfil === 'administrador'){
+            return res.status(403).render('erro', {mensagem: "Você não possui acesso"})
+        }
+
+        // Multer salva a imagem na pasta, e a variável guarda o nome dela caso o usuário tenha anexado uma imagem
+        const fotoDaPessoa = req.file ? `uploads/usuarios/${req.file.filename}` : null
+
+        // Criptrografa a senha do usuario
+        const senhaHash = await bcrypt.hash(senha, 10)
+
+        // Chama o model passando as informações já corrigidas
+        await usuarioModel.criarUsuario(nome, email, senhaHash, telefone, fotoDaPessoa, perfil )
+        
+        // Variável pra guardar onde tem de redirecionar o usuário
+        let redirecionadoPara = '/login'
+        // Verifica se já tem alguém logado, analisando se há algum token salvo
+        if(req.cookies && req.cookies.token){
+            try{
+                // Lê o token, e se o usuário atual for um adm, redireciona para tela geral dos adm
+                const decodificado = jwt.verify(req.cookies.token, process.env.JWT_SECRET)
+                if (decodificado.perfil === 'administrador'){
+                    redirecionadoPara = '/usuarios'
+                }
+            }
+            catch (erro){
+                // Segue o jogo indo pra login mesmo
+            }
+        }
+        // Ao fim, redireciona o usuário pra onde ele tem que ir, /login ou /usuarios 
+        res.redirect(redirecionadoPara)
     }
-  }
+    catch(erro){
+        console.error(erro)
+        res.status(500).render('erro', 
+            {mensagem: "Erro ao cadastrar usuário"})
+    }
+    },
+    //READ - LISTAR USUÁRIOS
+    listar: async (req,res) => {
+        try{
+            // Se deu certo, mostra a página de usuários
+            const usuarios = await usuarioModel.listarUsuarios()
+            // Renderiza a tela de usuários, passando o objeto com a lista completa 
+            res.render('usuarios/listar', { usuarios })
+        }
+        catch(erro){
+            //Se deu erro, mostra a tela de erro padrão para pessoa 
+            res.status(500).render('erro', {mensagem: "Erro ao listar usuários"})
+        }
+    }
 }

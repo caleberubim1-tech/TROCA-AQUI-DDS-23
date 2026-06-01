@@ -1,71 +1,82 @@
-//importado do módulo express
-const express = require("express");//criando uma instância do express
-const app = express(); // criando uma instância do aplicativo Express
-const path = require("path"); // importando o módulo path do Node.js para trabalhar com caminhos de arquivos
+// importação e uso do módulo express
+const express = require("express");
+const app = express();
+// módulo do node para lidar com caminho de arquivos
+const path = require("path");
 
-//Importa o modulo do dotenv para carregar as variáveis de ambiente do arquivo .env
-require('dotenv').config(); // carregando as variáveis de ambiente do arquivo .env
+// Importa o módulo do dotenv, lê o arquivo .env, e já configura inicialmente
+require('dotenv').config()
 
-//Define a porta do servidor com base nas variáveis de ambiente ou usando um valor padrão
-//Se der errado, o servidor irá rodar na porta 5000
+// Define a porta do servidor com base nas variáveis de ambiente
+// Se der errado, e porte será a 5000
 const port = process.env.PORT || 5000;
 
-//MIDDLEWARE PARA ENTENDER O JSON
-app.use(express.json()); //middleware para entender o formato JSON nas requisições
-app.use(express.urlencoded({ extended: true })); //middleware para entender o formato URL-encoded nas requisições
+// MIDDLEWARE PARA ENTENDER O JSON
+// Lê os dados em JSON
+app.use(express.json()) 
+// Servidor está apto a ler os dados dos formulário
+app.use(express.urlencoded({ extended: true })) 
+// Permite ler cookies e alterar também
+app.use(require('cookie-parser')())
 
-//Permite ler cookie nas requisições, necessário para o login
-app.use(require('cookie-parser')()); //middleware para entender os cookies nas requisições
+// CONFIGURAÇÃO DO EJS E PASTAS DO FRONT END
+// Define o EJS como engine do front
+app.set("view engine", "ejs");
+// Aponta para o express e ejs onde estão as páginas
+app.set("views", path.join(__dirname, "../client/views"));
+// Deixa a pasta public acessível ao usuário
+app.use(express.static(path.join(__dirname, "../client/public")));
 
-//CONFIGURAÇÂO DO EJS E PASTAS FRONT-END
-//Define o EJS COMO ENGINE DO FRONT 
-app.set('view engine', 'ejs');//definindo a pasta de views para o EJS
-//aponta para o express e ejs
-app.set('views', path.join(__dirname, "../client/views"));//definindo a pasta de views para o EJS
-//Deica a pasta pubic acessivel ao usuario
-app.use(express.static(path.join(__dirname, "../client/public"))); //definindo a pasta de arquivos estáticos para o Express
-//Criação de rotas padrão para o servidor
+// ROTAS PÚBLICAS
+// Criação de rotas padrão
+app.get("/", (req, res) => {
+  // Redireciona pra tela de login
+  res.status(200).redirect("/login");
+});
 
-app.get("/", (req, res) => {//definindo a rota raiz do servidor
-    res.status(200).redirect("/login");//enviando uma resposta JSON com uma mensagem de boas-vindas
-}); // fechando a função de callback da rota GET "/"
+//Rota que retorna a página de login
+app.get("/login", (req, res) => {
+  res.render('auth/login');
+});
 
-
-app.get ("/login",(req,res)=> 
-    { res.render("auth/login")}) //definindo a rota para a página de login, atualmente sem implementação
-
-app.get ("/cadastro",(req,res)=> 
-    { res.render("auth/cadastro") }) //definindo a rota para a página de cadastro, atualmente sem implementação
+// Rota que retorna a página de cadastro de usuário
+app.get("/cadastro", (req, res) => {
+  res.render('auth/cadastro');
+});
 
 //Importar as rotas de usuário
-const usuarioRoutes = require("./routes/usuarioRoutes.js");//importando as rotas de usuário do arquivo usuarioRoutes.js
+const usuariosRoutes = require("./routes/usuarioRoutes.js");
+// Requisições comecando com /usuarios é gerenciada pelo sub-arquivo de rotas
+app.use("/usuarios", usuariosRoutes);
 
-app.use("/usuarios", usuarioRoutes);//definindo a rota para as rotas de usuário, todas as rotas de usuário serão acessíveis através do caminho /usuarios
+//Importar as rotas de produtos
+const produtosRoutes = require("./routes/produtosRoutes.js");
+// Requisições comecando com /produtos é gerenciada pelo sub-arquivo de rotas
+app.use("/produtos", produtosRoutes);
 
+
+// //Função para subir o servidor
+// app.listen(port, () => {
+//   console.log(`Servidor ativo na porta: ${port}`);
+//   console.log(`Link: http://localhost:${port}`);
+// });
 
 // Traz as configurações do banco
 const pool = require("./config/db.js");
-
-// Cria uma conexão teste com o banco
+//Cria uma conexão teste com o banco
 (async () => {
   try {
-    // Se o banco de dados estiver ativo, aí sim o servidor será iniciado
+    // Se o banco de dados estiver ativo, ai sim o servidor será iniciado
     await pool.getConnection();
-
     console.log("Banco conectado");
-
-    // Se o banco de dados estiver ativo, aí sim o servidor será iniciado
+    // Se o banco de dados estiver ativo, ai sim o servidor será iniciado
     app.listen(port, () => {
-      console.log(`Link do servidor: http://localhost:${port}`);
+      console.log(`Link: http://localhost:${port}`);
       console.log(`Servidor funcionando na porta ${port}`);
-
     });
-
   } catch (erro) {
-
     // Se deu erro, avisa e encerra a tentativa
     console.log("Erro ao tentar conectar com o banco de dados");
-
     process.exit(1);
   }
 })();

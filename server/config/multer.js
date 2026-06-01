@@ -1,55 +1,47 @@
-const multer = require('multer')
-const path = require('path')
+// IMPORTAÇÃO DOS MÓDULOS NECESSÁRIO
+const multer = require("multer")
+const path = require("path")
 const fs = require('fs')
 
-// Configuração de armazenamento do multer usando disco
+// Configuração do diskStorage, lugar onde as imagens serão armazernadas
 const storage = multer.diskStorage({
-    // destination define o diretório onde o arquivo será salvo
-    destination: function(req, file, cb){
-
-        // pasta padrão para uploads que não sejam de usuários ou produtos
+    // Definição da pasta de destino
+    destination: (req, file, cb) => {
+        // Pasta reserva para caso dê errado o local certo
         let pastaDestino = 'gerais'
-
-        // Se a URL da requisição contiver /usuarios, salva em uploads/usuarios
+        // Dependendo da rota que chamar, encaminha a imagem para a pasta correta
         if(req.originalUrl.includes('/usuarios')){
             pastaDestino = 'usuarios'
         }
-        // Se a URL da requisição contiver /produtos, salva em uploads/produtos
-        else if(req.originalUrl.includes('/produtos')){
+        else if( req.originalUrl.includes('/produtos')){
             pastaDestino = 'produtos'
         }
-
-        // Cria o caminho completo relativo ao arquivo atual
+        // Variável que guarda o caminho da pasta principal de uploads
         const uploadPath = path.join(__dirname, `../../client/public/uploads/${pastaDestino}`)
-
-        // Se a pasta não existir, cria ela e todas as pastas necessárias
-        if(!fs.existsSync(uploadPath)) {
+        // Se não existir a pasta, o node tenta criar com o módulo fs
+        if (!fs.existsSync(uploadPath)){
             fs.mkdirSync(uploadPath, { recursive: true })
         }
-
-        // Chama o callback passando null para erro e o caminho de destino
+        // Função de callback, null diz que não houve erro nenhum, e retorna o caminho para a imagem
         cb(null, uploadPath)
     },
-
-    // filename define o nome final do arquivo salvo
-    filename: (req, file, cb) =>{
-        // Usa o timestamp atual para evitar nomes iguais
+    // função para alterar o nome do arquivo
+    filename: (req, file, cb ) => {
+        // pega a data atual
         const timestamp = Date.now()
-        // Acrescenta um número aleatório para aumentar a chance de nome único
+        // gera um número aleatório
         const numeroAleatorio = Math.round(Math.random() * 1E9)
-        // Mantém a extensão original do arquivo enviado
+        // pega a extensão do arquivo 
         const extensaoDoArquivo = path.extname(file.originalname)
-
-        // Nome final do arquivo com timestamp, número aleatório e extensão
+        
+        // variável com o nome final do arquivo, já com as alterações para evitar duplicatas
         const nomeFinalSeguro = `${timestamp}-${numeroAleatorio}${extensaoDoArquivo}`
-
-        // Chama o callback passando null para erro e o nome do arquivo
+        
+        // Função de callback, null diz que não houve erro nenhum, e retorna o nome para a imagem
         cb(null, nomeFinalSeguro)
     }
 })
 
-// Cria o middleware de upload usando o storage configurado
 const upload = multer({ storage: storage })
 
-// Exporta o middleware para uso em outras partes da aplicação
-module.exports = upload
+module.exports = upload;
