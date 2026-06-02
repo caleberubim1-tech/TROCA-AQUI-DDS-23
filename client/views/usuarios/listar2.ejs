@@ -1,0 +1,59 @@
+<!-- // Vitrine page -->
+<%- include ('../partials/header') %>
+
+    <!-- Main: com o conteudo da pagina-->
+    <main class="container">
+
+        <h2>Lista de Usuários</h2>
+
+        <a href="/usuarios/cadastro" class="btn btn-primary"> + Novo Usuário </a>
+
+        <!-- Botão para voltar para o painel do admin -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px;">
+            <!-- Verificar se existem usuários para exibir -->
+            <% if (usuarios && usuarios.length> 0) { %>
+
+                <!-- Criar cards, com as informações da lista -->
+                <% usuarios.forEach(function(user)) {%>
+
+                    <!-- CARD -->
+                    <div class="card"
+                        style="border: 2px solid var(--cor-borda); box-shadow: 4px 4px 0px var (--cor-borda); background: var(--cor-fundo); display: flex; flex-direction: column; height: 100%;">
+
+                        <!-- FOTO DA PESSOA -->
+                        <% if(user.foto){ %>
+                            <img src="<%= user.foto %>" style="width: 100%; height: 200px; object-fit: cover;">}
+                            <% } else { %>
+                                <img src="../img/sem-foto.png" style="width: 100%; height: 200px; object-fit: cover;">
+                                <% } %>
+
+                                    <!-- Corpo do card -->
+                                    <div style="padding: 15px; display: flex; flex-direction: column; flex-grow: 1;">
+                                        <!-- NOME -->
+                                        <h3 style="margin-bottom: 10px; color: var(--cor-texto-principal)">
+                                            <%= user.nome %>
+                                        </h3>
+
+                                        <!-- Email -->
+                                        <span style="font-size: 14px; color:var(--cor-texto-principal)">
+                                            <i class="fa-solid fa-envelope"></i>
+                                            <%= user.email ? user.email : "Sem email" %>
+                                        </span>
+
+                                        <!-- Telefone -->
+                                        <span style="font-size: 14px; color:var(--cor-texto-principal)">
+                                            <i class="fa-solid fa-phone"></i>
+                                            <%= user.telefone ? user.telefone : "Sem telefone" %>
+                                        </span>
+                                    </div>
+                    </div>
+
+                    <%} else { %>
+                        <h2>Nenhum usuário encontrado.</h2>
+                        <% } %>
+
+        </div>
+    </main>
+
+    <!-- importa o footer -->
+    <%- include ('../partials/footer') %>
